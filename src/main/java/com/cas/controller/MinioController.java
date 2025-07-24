@@ -3,9 +3,11 @@ package com.cas.controller;
 import com.cas.util.MinIOUtils;
 import io.minio.GetObjectArgs;
 import io.minio.GetObjectResponse;
+import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.UploadObjectArgs;
+import io.minio.http.Method;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +29,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/minio")
@@ -46,11 +49,11 @@ public class MinioController {
     public void upload(MultipartFile file) throws Exception {
         InputStream inputStream = file.getInputStream();
         String filename = file.getOriginalFilename();
-        list.push(filename);
+        list.push("/1012/T/B/" + filename);
         minioClient.putObject(
                 PutObjectArgs.builder()
                         .bucket(TEST)
-                        .object(filename)
+                        .object("/1012/T/B/" + filename)
                         .contentType("Image/png")
                         .stream(inputStream, inputStream.available(), -1)
                         .build());
@@ -77,6 +80,49 @@ public class MinioController {
         // 关闭流
         response.getOutputStream().close();
         in.close();
+    }
+
+    /**
+     * 获取所有文件名
+     *
+     * @throws Exception
+     */
+    @PostMapping("/query")
+    public List<String> query() throws Exception {
+        List<String> fileNames = new ArrayList<>();
+
+        // 列出存储桶中的所有对象
+        Iterable<io.minio.Result<io.minio.messages.Item>> results =
+                minioClient.listObjects(
+                        io.minio.ListObjectsArgs.builder()
+                                .bucket(TEST)
+                                .build());
+
+        // 遍历结果并提取文件名
+        for (io.minio.Result<io.minio.messages.Item> result : results) {
+            io.minio.messages.Item item = result.get();
+            fileNames.add(item.objectName());
+        }
+
+        return fileNames;
+    }
+
+    /**
+     * 获取上传文件地址
+     *
+     * @throws Exception
+     */
+    @PostMapping("/queryUploadUrl")
+    public String queryUploadUrl() throws Exception {
+        String uploadUrl = minioClient.getPresignedObjectUrl(
+                GetPresignedObjectUrlArgs.builder()
+                        .method(Method.PUT)
+                        .bucket(TEST)
+                        .object("example.jpg")
+                        .expiry(7, TimeUnit.DAYS)
+                        .build());
+        System.out.println("上传URL: " + uploadUrl);
+        return uploadUrl;
     }
 
 }
