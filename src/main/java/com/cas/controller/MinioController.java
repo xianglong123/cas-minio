@@ -111,6 +111,7 @@ public class MinioController {
      * 获取上传文件地址
      *
      * @throws Exception
+     * http://127.0.0.1:9000/test/example.jpg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20250724%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20250724T054622Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=a7b255e53f9a2339a9ab4b1d604c59d8d36e329b5e581a444498e9a354f47902
      */
     @PostMapping("/queryUploadUrl")
     public String queryUploadUrl() throws Exception {
